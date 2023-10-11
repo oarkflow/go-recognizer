@@ -90,38 +90,6 @@ func NewRecognizerWithConfig(modelDir string, size int, padding float32, jitteri
 	return
 }
 
-func (rec *Recognizer) livecheckmouse(type_ int, imgData []byte, maxFaces int) (isOpen int, err error) {
-	if len(imgData) == 0 {
-		err = ImageLoadError("Empty image")
-		return
-	}
-	if maxFaces > maxFaceLimit {
-		maxFaces = maxFaceLimit
-	}
-	cImgData := (*C.uint8_t)(&imgData[0])
-	cLen := C.int(len(imgData))
-	cMaxFaces := C.int(maxFaces)
-	cType := C.int(type_)
-	open := C.facerec_live_check_mouse(rec.ptr, cImgData, cLen, cMaxFaces, cType)
-	return int(open), err
-}
-
-func (rec *Recognizer) livecheckeye(type_ int, imgData []byte, maxFaces int) (isOpen int, err error) {
-	if len(imgData) == 0 {
-		err = ImageLoadError("Empty image")
-		return
-	}
-	if maxFaces > maxFaceLimit {
-		maxFaces = maxFaceLimit
-	}
-	cImgData := (*C.uint8_t)(&imgData[0])
-	cLen := C.int(len(imgData))
-	cMaxFaces := C.int(maxFaces)
-	cType := C.int(type_)
-	open := C.facerec_live_check_eye(rec.ptr, cImgData, cLen, cMaxFaces, cType)
-	return int(open), err
-}
-
 func (rec *Recognizer) recognize(type_ int, imgData []byte, maxFaces int) (faces []Face, err error) {
 	if len(imgData) == 0 {
 		err = ImageLoadError("Empty image")
@@ -198,25 +166,11 @@ func (rec *Recognizer) recognizeFile(type_ int, imgPath string, maxFaces int) (f
 	return rec.recognize(type_, imgData, maxFaces)
 }
 
-/*func (rec *Recognizer) checkFromFile(type_ int, imgPath string, maxFaces int) (isOpen int, err error) {
-	fd, err := os.Open(imgPath)
-	if err != nil {
-		return
-	}
-	defer fd.Close()
-	imgData, err := ioutil.ReadAll(fd)
-	if err != nil {
-		return
-	}
-	return rec.livecheckmouse(type_, imgData, maxFaces)
-}*/
-
 // Recognize returns all faces found on the provided image, sorted from
 // left to right. Empty list is returned if there are no faces, error is
 // returned if there was some error while decoding/processing image.
 // Only JPEG format is currently supported. Thread-safe.
 func (rec *Recognizer) Recognize(imgData []byte) (faces []Face, err error) {
-	println(faces)
 	return rec.recognize(0, imgData, 0)
 }
 
@@ -243,19 +197,6 @@ func (rec *Recognizer) RecognizeSingleCNN(imgData []byte) (face *Face, err error
 	face = &faces[0]
 	return
 }
-
-func (rec *Recognizer) LiveCheckFromFile(imgData []byte) (code int, err error) {
-	return rec.livecheckmouse(0, imgData, 0)
-}
-
-/*func (rec *Recognizer) LiveCheckFromPath(imgPath string) (isOpen int, err error) {
-	return rec.checkFromFile(0, imgPath, 0)
-}*/
-
-func (rec *Recognizer) MouseDetectedFromFile(imgData []byte) (code int, err error) {
-	return rec.livecheckeye(0, imgData, 0)
-}
-
 
 // Same as Recognize but accepts image path instead.
 func (rec *Recognizer) RecognizeFile(imgPath string) (faces []Face, err error) {
