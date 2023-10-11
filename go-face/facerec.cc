@@ -63,7 +63,7 @@ public:
 		detector_ = get_frontal_face_detector();
 
 		std::string dir = model_dir;
-		std::string shape_predictor_path = dir + "/shape_predictor_68_face_landmarks.dat";
+		std::string shape_predictor_path = dir + "/shape_predictor_5_face_landmarks.dat";
 		std::string resnet_path = dir + "/dlib_face_recognition_resnet_model_v1.dat";
 		std::string cnn_resnet_path = dir + "/mmod_human_face_detector.dat";
 
@@ -114,96 +114,6 @@ public:
 
 		return {std::move(rects), std::move(descrs), std::move(shapes)};
 	}
-
-	int LiveObjMouse(const matrix<rgb_pixel>& img,int max_faces,int type) {
-    		std::vector<rectangle> rects;
-
-    		if(type == 0) {
-    			std::lock_guard<std::mutex> lock(detector_mutex_);
-    			rects = detector_(img);
-    		} else{
-    			std::lock_guard<std::mutex> lock(cnn_net_mutex_);
-    			auto dets = cnn_net_(img);
-                for (auto&& d : dets) {
-                    rects.push_back(d.rect);
-                }
-    		}
-
-    		// Short circuit.
-    		if (rects.size() == 0 || (max_faces > 0 && rects.size() > (size_t)max_faces))
-    			return -1;
-
-    		std::sort(rects.begin(), rects.end());
-            int res = 2;
-    		for (const auto& rect : rects) {
-    			auto shape = sp_(img, rect);
-                res =  _mouthCheck(shape);
-                break;
-    		}
-
-    		return res;
-    }
-    int _mouthCheck(const full_object_detection& shape)
-    {
-        double dist_top = _calcDistance(shape, 33, 62);
-        double dist_bot = _calcDistance(shape, 33, 66);
-        double scale = dist_top / dist_bot;
-        if (scale >= 0.85 && scale <= 1.1) return 0;
-        return 1;
-    }
-
-
-    int LiveObjEye(const matrix<rgb_pixel>& img,int max_faces,int type) {
-        		std::vector<rectangle> rects;
-
-        		if(type == 0) {
-        			std::lock_guard<std::mutex> lock(detector_mutex_);
-        			rects = detector_(img);
-        		} else{
-        			std::lock_guard<std::mutex> lock(cnn_net_mutex_);
-        			auto dets = cnn_net_(img);
-                    for (auto&& d : dets) {
-                        rects.push_back(d.rect);
-                    }
-        		}
-
-        		// Short circuit.
-        		if (rects.size() == 0 || (max_faces > 0 && rects.size() > (size_t)max_faces))
-        			return -1;
-
-        		std::sort(rects.begin(), rects.end());
-                int res = 2;
-        		for (const auto& rect : rects) {
-        			auto shape = sp_(img, rect);
-                    res =  _eyeCheck(shape);
-                    break;
-        		}
-
-        		return res;
-        }
-
-    int _eyeCheck(const full_object_detection& shape)
-    {
-        double eyes_ar_thresh = 0.43;
-        double ar_left = (_calcDistance(shape, 37, 41) + _calcDistance(shape, 38, 40)) / (2 * _calcDistance(shape, 36, 39));
-        double ar_right = (_calcDistance(shape, 43, 47) + _calcDistance(shape, 44, 46)) / (2 * _calcDistance(shape, 42, 45));
-
-        if (ar_left + ar_right > eyes_ar_thresh) return 1;
-        return 0;
-    }
-
-    double _calcDistance(const full_object_detection& shape, int idx_from, int idx_to)
-    {
-        long p1x = shape.part(idx_from).x();
-        long p1y = shape.part(idx_from).y();
-        long p2x = shape.part(idx_to).x();
-        long p2y = shape.part(idx_to).y();
-
-        return sqrt((p1x - p2x) * (p1x - p2x) + (p1y - p2y) * (p1y - p2y));
-
-    }
-
-
 
 	void SetSamples(std::vector<descriptor>&& samples, std::vector<int>&& cats) {
 		std::unique_lock<std::shared_mutex> lock(samples_mutex_);
@@ -359,24 +269,4 @@ static std::vector<matrix<rgb_pixel>> jitter_image(
         crops.push_back(jitter_image(img,rnd));
 
     return crops;
-}
-
-int facerec_live_check(facerec* rec, const uint8_t* img_data, int len, int max_faces,int type) {
-    FaceRec* cls = (FaceRec*)(rec->cls);
-    matrix<rgb_pixel> img;
-
-    try {
-    	// TODO(Kagami): Support more file types?
-        load_mem_jpeg(img, img_data, len);
-        return cls->LiveObjMouse(img, max_faces,type);
-    } catch(image_load_error& e) {
-        //ret->err_str = strdup(e.what());
-        //ret->err_code = IMAGE_LOAD_ERROR;
-        return -2;
-    } catch (std::exception& e) {
-        //ret->err_str = strdup(e.what());
-        //ret->err_code = UNKNOWN_ERROR;
-        return -2;
-    }
-    return -2;
 }

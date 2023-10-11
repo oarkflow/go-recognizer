@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/leandroveronezi/go-recognizer"
+	"github.com/oarkflow/imaging/recognizer"
 )
 
 func addFile(rec *recognizer.Recognizer, Path, Id string) {

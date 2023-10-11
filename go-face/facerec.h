@@ -31,13 +31,10 @@ typedef struct faceret {
 
 facerec* facerec_init(const char* model_dir);
 faceret* facerec_recognize(facerec* rec, const uint8_t* img_data, int len, int max_faces,int type);
-int facerec_live_check_mouse(facerec* rec, const uint8_t* img_data, int len, int max_faces,int type);
-int facerec_live_check_eye(facerec* rec, const uint8_t* img_data, int len, int max_faces,int type);
 void facerec_set_samples(facerec* rec, const float* descriptors, const int32_t* cats, int len);
 int facerec_classify(facerec* rec, const float* descriptor, float tolerance);
 void facerec_free(facerec* rec);
 void facerec_config(facerec* rec, unsigned long size, double padding, int jittering);
-
 #ifdef __cplusplus
 }
 #endif
