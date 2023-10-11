@@ -1,13 +1,10 @@
 package recognizer
 
 import (
-	"bufio"
-	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"image"
 	"image/color"
-	"image/jpeg"
 	"os"
 	"path/filepath"
 
@@ -24,46 +21,24 @@ import (
 LoadImage Load an image from file
 */
 func (_this *Recognizer) LoadImage(Path string) (image.Image, error) {
-
 	existingImageFile, err := os.Open(Path)
 	if err != nil {
 		return nil, err
 	}
 	defer existingImageFile.Close()
-
-	imageData, _, err := image.Decode(existingImageFile)
-	if err != nil {
-		return nil, err
-	}
-
-	return imageData, nil
-
+	return imag.Decode(existingImageFile, imag.AutoOrientation(true))
 }
 
 /*
 SaveImage Save an image to jpeg file
 */
 func (_this *Recognizer) SaveImage(Path string, Img image.Image) error {
-	var b bytes.Buffer
-	w := bufio.NewWriter(&b)
-	if err := imag.Encode(w, Img, imag.JPEG); err != nil {
-		return err
-	}
-	Img, err := imag.Decode(&b, imag.AutoOrientation(true))
-	if err != nil {
-		return err
-	}
 	outputFile, err := os.Create(Path)
 	if err != nil {
 		return err
 	}
-	err = jpeg.Encode(outputFile, Img, nil)
-
-	if err != nil {
-		return err
-	}
-
-	return outputFile.Close()
+	defer outputFile.Close()
+	return imag.Encode(outputFile, Img, imag.JPEG)
 
 }
 
@@ -109,25 +84,18 @@ func (_this *Recognizer) tempFileName(prefix, suffix string) string {
 DrawFaces draws the faces identified in the original image
 */
 func (_this *Recognizer) DrawFaces(Path string, F []Face) (image.Image, error) {
-
 	img, err := _this.LoadImage(Path)
-
 	if err != nil {
 		return nil, err
 	}
-
 	font, err := truetype.Parse(goregular.TTF)
 	if err != nil {
 		return nil, err
 	}
-
 	face := truetype.NewFace(font, &truetype.Options{Size: 24})
-
 	dc := gg.NewContextForImage(img)
 	dc.SetFontFace(face)
-
 	for _, f := range F {
-
 		dc.SetRGB255(0, 0, 255)
 
 		x := float64(f.Rectangle.Min.X)
