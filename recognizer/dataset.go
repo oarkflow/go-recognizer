@@ -3,7 +3,6 @@ package recognizer
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 )
 
@@ -18,7 +17,7 @@ func (_this *Recognizer) SaveDataset(Path string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(Path, data, 0777)
+	return os.WriteFile(Path, data, 0777)
 
 }
 

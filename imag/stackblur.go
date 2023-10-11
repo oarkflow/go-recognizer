@@ -2,7 +2,7 @@
 // https://github.com/esimov/stackblur-go
 // http://incubator.quasimondo.com/processing/fast_blur_deluxe.php
 
-package imaging
+package imag
 
 import (
 	"errors"

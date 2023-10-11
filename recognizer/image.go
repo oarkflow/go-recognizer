@@ -1,12 +1,13 @@
 package recognizer
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"image"
 	"image/color"
 	"image/jpeg"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -14,10 +15,9 @@ import (
 
 	"github.com/oarkflow/imaging/freetype/truetype"
 
-	"github.com/oarkflow/imaging/exif"
 	"github.com/oarkflow/imaging/gg"
 	goFace "github.com/oarkflow/imaging/go-face"
-	"github.com/oarkflow/imaging/imaging"
+	"github.com/oarkflow/imaging/imag"
 )
 
 /*
@@ -44,12 +44,19 @@ func (_this *Recognizer) LoadImage(Path string) (image.Image, error) {
 SaveImage Save an image to jpeg file
 */
 func (_this *Recognizer) SaveImage(Path string, Img image.Image) error {
-
+	var b bytes.Buffer
+	w := bufio.NewWriter(&b)
+	if err := imag.Encode(w, Img, imag.JPEG); err != nil {
+		return err
+	}
+	Img, err := imag.Decode(&b, imag.AutoOrientation(true))
+	if err != nil {
+		return err
+	}
 	outputFile, err := os.Create(Path)
 	if err != nil {
 		return err
 	}
-
 	err = jpeg.Encode(outputFile, Img, nil)
 
 	if err != nil {
@@ -64,7 +71,7 @@ func (_this *Recognizer) SaveImage(Path string, Img image.Image) error {
 GrayScale Convert an image to grayscale
 */
 func (_this *Recognizer) GrayScale(imgSrc image.Image) image.Image {
-	return imaging.Grayscale(imgSrc)
+	return imag.Grayscale(imgSrc)
 }
 
 /*
@@ -162,49 +169,4 @@ func (_this *Recognizer) DrawFaces2(Path string, F []goFace.Face) (image.Image, 
 
 	return _this.DrawFaces(Path, aux)
 
-}
-
-func AlignImage(reader io.ReadSeeker) (image.Image, string, error) {
-	img, ft, err := image.Decode(reader)
-	if err != nil {
-		return img, ft, err
-	}
-	reader.Seek(0, io.SeekStart)
-	orientation := getOrientation(reader)
-	switch orientation {
-	case "1":
-	case "2":
-		img = imaging.FlipV(img)
-	case "3":
-		img = imaging.Rotate180(img)
-	case "4":
-		img = imaging.Rotate180(imaging.FlipV(img))
-	case "5":
-		img = imaging.Rotate270(imaging.FlipV(img))
-	case "6":
-		img = imaging.Rotate270(img)
-	case "7":
-		img = imaging.Rotate90(imaging.FlipV(img))
-	case "8":
-		img = imaging.Rotate90(img)
-	}
-	return img, ft, err
-}
-
-func getOrientation(reader io.Reader) string {
-	x, err := exif.Decode(reader)
-	if err != nil {
-		return "1"
-	}
-	if x != nil {
-		orient, err := x.Get(exif.Orientation)
-		if err != nil {
-			return "1"
-		}
-		if orient != nil {
-			return orient.String()
-		}
-	}
-
-	return "1"
 }

@@ -39,13 +39,7 @@ type Recognizer struct {
 Init initialise a recognizer interface.
 */
 func (_this *Recognizer) Init(Path string) error {
-
-	_this.Tolerance = 0.4
-	_this.UseCNN = false
-	_this.UseGray = true
-
 	_this.Dataset = make([]Data, 0)
-
 	rec, err := goFace.NewRecognizer(Path)
 
 	if err == nil {
@@ -85,9 +79,7 @@ func (_this *Recognizer) AddImageToDataset(Path string, Id string) error {
 		defer os.Remove(file)
 
 	}
-
 	var faces []goFace.Face
-
 	if _this.UseCNN {
 		faces, err = _this.rec.RecognizeFileCNN(file)
 	} else {

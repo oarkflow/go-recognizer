@@ -1,4 +1,4 @@
-package imaging
+package imag
 
 import (
 	"encoding/binary"
@@ -9,7 +9,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -68,8 +67,8 @@ func Decode(r io.Reader, opts ...DecodeOption) (image.Image, error) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		orient = readOrientation(pr)
-		io.Copy(ioutil.Discard, pr)
+		orient = ReadOrientation(pr)
+		io.Copy(io.Discard, pr)
 	}()
 
 	img, _, err := image.Decode(r)
@@ -78,8 +77,7 @@ func Decode(r io.Reader, opts ...DecodeOption) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return fixOrientation(img, orient), nil
+	return FixOrientation(img, orient), nil
 }
 
 // Open loads an image from file.
@@ -87,10 +85,10 @@ func Decode(r io.Reader, opts ...DecodeOption) (image.Image, error) {
 // Examples:
 //
 //	// Load an image from file.
-//	img, err := imaging.Open("test.jpg")
+//	img, err := imag.Open("test.jpg")
 //
 //	// Load an image and transform it depending on the EXIF orientation tag (if present).
-//	img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
+//	img, err := imag.Open("test.jpg", imag.AutoOrientation(true))
 func Open(filename string, opts ...DecodeOption) (image.Image, error) {
 	file, err := fs.Open(filename)
 	if err != nil {
@@ -135,7 +133,7 @@ func (f Format) String() string {
 }
 
 // ErrUnsupportedFormat means the given image format is not supported.
-var ErrUnsupportedFormat = errors.New("imaging: unsupported image format")
+var ErrUnsupportedFormat = errors.New("imag: unsupported image format")
 
 // FormatFromExtension parses image format from filename extension:
 // "jpg" (or "jpeg"), "png", "gif", "tif" (or "tiff") and "bmp" are supported.
@@ -259,10 +257,10 @@ func Encode(w io.Writer, img image.Image, format Format, opts ...EncodeOption) e
 // Examples:
 //
 //	// Save the image as PNG.
-//	err := imaging.Save(img, "out.png")
+//	err := imag.Save(img, "out.png")
 //
 //	// Save the image as JPEG with optional quality parameter set to 80.
-//	err := imaging.Save(img, "out.jpg", imaging.JPEGQuality(80))
+//	err := imag.Save(img, "out.jpg", imag.JPEGQuality(80))
 func Save(img image.Image, filename string, opts ...EncodeOption) (err error) {
 	f, err := FormatFromFilename(filename)
 	if err != nil {
@@ -296,11 +294,11 @@ const (
 	orientationRotate90    = 8
 )
 
-// readOrientation tries to read the orientation EXIF flag from image data in r.
+// ReadOrientation tries to read the orientation EXIF flag from image data in r.
 // If the EXIF data block is not found or the orientation flag is not found
 // or any other error occures while reading the data, it returns the
 // orientationUnspecified (0) value.
-func readOrientation(r io.Reader) orientation {
+func ReadOrientation(r io.Reader) orientation {
 	const (
 		markerSOI      = 0xffd8
 		markerAPP1     = 0xffe1
@@ -337,7 +335,7 @@ func readOrientation(r io.Reader) orientation {
 		if size < 2 {
 			return orientationUnspecified // Invalid block size.
 		}
-		if _, err := io.CopyN(ioutil.Discard, r, int64(size-2)); err != nil {
+		if _, err := io.CopyN(io.Discard, r, int64(size-2)); err != nil {
 			return orientationUnspecified
 		}
 	}
@@ -350,7 +348,7 @@ func readOrientation(r io.Reader) orientation {
 	if header != exifHeader {
 		return orientationUnspecified
 	}
-	if _, err := io.CopyN(ioutil.Discard, r, 2); err != nil {
+	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
 		return orientationUnspecified
 	}
 
@@ -370,7 +368,7 @@ func readOrientation(r io.Reader) orientation {
 	default:
 		return orientationUnspecified // Invalid byte order flag.
 	}
-	if _, err := io.CopyN(ioutil.Discard, r, 2); err != nil {
+	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
 		return orientationUnspecified
 	}
 
@@ -382,7 +380,7 @@ func readOrientation(r io.Reader) orientation {
 	if offset < 8 {
 		return orientationUnspecified // Invalid offset value.
 	}
-	if _, err := io.CopyN(ioutil.Discard, r, int64(offset-8)); err != nil {
+	if _, err := io.CopyN(io.Discard, r, int64(offset-8)); err != nil {
 		return orientationUnspecified
 	}
 
@@ -399,12 +397,12 @@ func readOrientation(r io.Reader) orientation {
 			return orientationUnspecified
 		}
 		if tag != orientationTag {
-			if _, err := io.CopyN(ioutil.Discard, r, 10); err != nil {
+			if _, err := io.CopyN(io.Discard, r, 10); err != nil {
 				return orientationUnspecified
 			}
 			continue
 		}
-		if _, err := io.CopyN(ioutil.Discard, r, 6); err != nil {
+		if _, err := io.CopyN(io.Discard, r, 6); err != nil {
 			return orientationUnspecified
 		}
 		var val uint16
@@ -419,8 +417,8 @@ func readOrientation(r io.Reader) orientation {
 	return orientationUnspecified // Missing orientation tag.
 }
 
-// fixOrientation applies a transform to img corresponding to the given orientation flag.
-func fixOrientation(img image.Image, o orientation) image.Image {
+// FixOrientation applies a transform to img corresponding to the given orientation flag.
+func FixOrientation(img image.Image, o orientation) image.Image {
 	switch o {
 	case orientationNormal:
 	case orientationFlipH:

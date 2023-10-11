@@ -7,11 +7,15 @@ package face
 // #include "facerec.h"
 import "C"
 import (
+	"bufio"
+	"bytes"
 	"image"
-	"io/ioutil"
+	"io"
 	"math"
 	"os"
 	"unsafe"
+
+	"github.com/oarkflow/imaging/imag"
 )
 
 const (
@@ -153,17 +157,36 @@ func (rec *Recognizer) recognize(type_ int, imgData []byte, maxFaces int) (faces
 	return
 }
 
-func (rec *Recognizer) recognizeFile(type_ int, imgPath string, maxFaces int) (face []Face, err error) {
+func (rec *Recognizer) recognizeFileOld(type_ int, imgPath string, maxFaces int) (face []Face, err error) {
 	fd, err := os.Open(imgPath)
 	if err != nil {
 		return
 	}
 	defer fd.Close()
-	imgData, err := ioutil.ReadAll(fd)
+	imgData, err := io.ReadAll(fd)
 	if err != nil {
 		return
 	}
 	return rec.recognize(type_, imgData, maxFaces)
+}
+
+func (rec *Recognizer) recognizeFile(type_ int, imgPath string, maxFaces int) (face []Face, err error) {
+	var b bytes.Buffer
+	w := bufio.NewWriter(&b)
+
+	fd, err := os.Open(imgPath)
+	if err != nil {
+		return
+	}
+	defer fd.Close()
+	img, err := imag.Decode(fd, imag.AutoOrientation(true))
+	if err != nil {
+		return nil, err
+	}
+	if err := imag.Encode(w, img, imag.JPEG); err != nil {
+		return nil, err
+	}
+	return rec.recognize(type_, b.Bytes(), maxFaces)
 }
 
 // Recognize returns all faces found on the provided image, sorted from

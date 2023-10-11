@@ -1,4 +1,4 @@
-package imaging
+package imag
 
 import (
 	"image"
@@ -60,7 +60,7 @@ func precomputeWeights(dstSize, srcSize int, filter ResampleFilter) [][]indexWei
 //
 // Example:
 //
-//	dstImage := imaging.Resize(srcImage, 800, 600, imaging.Lanczos)
+//	dstImage := imag.Resize(srcImage, 800, 600, imag.Lanczos)
 func Resize(img image.Image, width, height int, filter ResampleFilter) *image.NRGBA {
 	dstW, dstH := width, height
 	if dstW < 0 || dstH < 0 {
@@ -218,7 +218,7 @@ func resizeNearest(img image.Image, width, height int) *image.NRGBA {
 //
 // Example:
 //
-//	dstImage := imaging.Fit(srcImage, 800, 600, imaging.Lanczos)
+//	dstImage := imag.Fit(srcImage, 800, 600, imag.Lanczos)
 func Fit(img image.Image, width, height int, filter ResampleFilter) *image.NRGBA {
 	maxW, maxH := width, height
 
@@ -258,7 +258,7 @@ func Fit(img image.Image, width, height int, filter ResampleFilter) *image.NRGBA
 //
 // Example:
 //
-//	dstImage := imaging.Fill(srcImage, 800, 600, imaging.Center, imaging.Lanczos)
+//	dstImage := imag.Fill(srcImage, 800, 600, imag.Center, imag.Lanczos)
 func Fill(img image.Image, width, height int, anchor Anchor, filter ResampleFilter) *image.NRGBA {
 	dstW, dstH := width, height
 
@@ -336,7 +336,7 @@ func resizeAndCrop(img image.Image, width, height int, anchor Anchor, filter Res
 //
 // Example:
 //
-//	dstImage := imaging.Thumbnail(srcImage, 100, 100, imaging.Lanczos)
+//	dstImage := imag.Thumbnail(srcImage, 100, 100, imag.Lanczos)
 func Thumbnail(img image.Image, width, height int, filter ResampleFilter) *image.NRGBA {
 	return Fill(img, width, height, Center, filter)
 }

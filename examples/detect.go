@@ -35,7 +35,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Can't recognize: %v", err)
 	}
-	fmt.Println(len(faces))
 	if len(faces) != 10 {
 		log.Fatalf("Wrong number of faces")
 	}

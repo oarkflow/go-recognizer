@@ -1,4 +1,4 @@
-package imaging
+package imag
 
 import (
 	"bytes"
@@ -180,10 +180,10 @@ func PasteCenter(background, img image.Image) *image.NRGBA {
 // Examples:
 //
 //	// Draw spriteImage over backgroundImage at the given position (x=50, y=50).
-//	dstImage := imaging.Overlay(backgroundImage, spriteImage, image.Pt(50, 50), 1.0)
+//	dstImage := imag.Overlay(backgroundImage, spriteImage, image.Pt(50, 50), 1.0)
 //
 //	// Blend two opaque images of the same size.
-//	dstImage := imaging.Overlay(imageOne, imageTwo, image.Pt(0, 0), 0.5)
+//	dstImage := imag.Overlay(imageOne, imageTwo, image.Pt(0, 0), 0.5)
 func Overlay(background, img image.Image, pos image.Point, opacity float64) *image.NRGBA {
 	opacity = math.Min(math.Max(opacity, 0.0), 1.0) // Ensure 0.0 <= opacity <= 1.0.
 	dst := Clone(background)
