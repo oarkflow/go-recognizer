@@ -32,9 +32,20 @@ func main() {
 		}
 	}
 	rec.SetSamples()
-	images, err := rec.FilterImageById(fotosDir, "Sujit")
+	/*
+		images, err := rec.FilterImageById(fotosDir, "Sujit")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(len(images))
+	*/
+
+	images, err := rec.FilterImageByFacesInImage(fotosDir, "elenco3.jpg")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(len(images))
+	for _, img := range images {
+		fmt.Println(img.Image, img.Faces)
+		rec.SaveImage("matching-"+img.Image, img.File)
+	}
 }

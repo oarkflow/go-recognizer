@@ -253,6 +253,53 @@ func (_this *Recognizer) FilterImageById(dir, id string) (map[string]image.Image
 	return images, nil
 }
 
+type FacesInImage struct {
+	Image string
+	File  image.Image
+	Faces []string
+}
+
+func (_this *Recognizer) FilterImageByFacesInImage(dir, file string) ([]FacesInImage, error) {
+	faces, err := _this.ClassifyMultiples(filepath.Join(dir, file))
+	if err != nil {
+		return nil, err
+	}
+	var data []FacesInImage
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		classifiedFaces, err := _this.ClassifyMultiples(filepath.Join(dir, file.Name()))
+		if err != nil {
+			return nil, err
+		}
+		var foundFaces []Face
+		var faceIds []string
+		for _, f := range classifiedFaces {
+			for _, face := range faces {
+				if face.Id == f.Id {
+					foundFaces = append(foundFaces, f)
+					faceIds = append(faceIds, f.Id)
+				}
+			}
+		}
+		if len(faceIds) > 0 {
+			img, err := _this.DrawFaces(filepath.Join(dir, file.Name()), foundFaces)
+			if err != nil {
+				return nil, err
+			}
+			data = append(data, FacesInImage{
+				Image: file.Name(),
+				File:  img,
+				Faces: faceIds,
+			})
+		}
+	}
+	return data, nil
+}
+
 /*
 fileExists check se file exist
 */

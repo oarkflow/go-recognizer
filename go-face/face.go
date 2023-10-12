@@ -194,11 +194,11 @@ func (rec *Recognizer) recognizeFile(type_ int, imgPath string, maxFaces int) (f
 // returned if there was some error while decoding/processing image.
 // Only JPEG format is currently supported. Thread-safe.
 func (rec *Recognizer) Recognize(imgData []byte) (faces []Face, err error) {
-	return rec.recognize(0, imgData, 0)
+	return rec.recognize(0, imgData, 10)
 }
 
 func (rec *Recognizer) RecognizeCNN(imgData []byte) (faces []Face, err error) {
-	return rec.recognize(1, imgData, 0)
+	return rec.recognize(1, imgData, 10)
 }
 
 // RecognizeSingle returns face if it's the only face on the image or
@@ -213,7 +213,7 @@ func (rec *Recognizer) RecognizeSingle(imgData []byte) (face *Face, err error) {
 }
 
 func (rec *Recognizer) RecognizeSingleCNN(imgData []byte) (face *Face, err error) {
-	faces, err := rec.recognize(1, imgData, 1)
+	faces, err := rec.recognize(1, imgData, 0)
 	if err != nil || len(faces) != 1 {
 		return
 	}
@@ -223,11 +223,11 @@ func (rec *Recognizer) RecognizeSingleCNN(imgData []byte) (face *Face, err error
 
 // RecognizeFile Same as Recognize but accepts image path instead.
 func (rec *Recognizer) RecognizeFile(imgPath string) (faces []Face, err error) {
-	return rec.recognizeFile(0, imgPath, 0)
+	return rec.recognizeFile(0, imgPath, 10)
 }
 
 func (rec *Recognizer) RecognizeFileCNN(imgPath string) (faces []Face, err error) {
-	return rec.recognizeFile(1, imgPath, 0)
+	return rec.recognizeFile(1, imgPath, 10)
 }
 
 // RecognizeSingleFile Same as RecognizeSingle but accepts image path instead.
@@ -252,13 +252,17 @@ func (rec *Recognizer) RecognizeSingleFileCNN(imgPath string) (face *Face, err e
 // SetSamples sets known descriptors so you can classify the new ones.
 // Thread-safe.
 func (rec *Recognizer) SetSamples(samples []Descriptor, cats []int32) {
-	if len(samples) == 0 || len(samples) != len(cats) {
+	// if len(samples) == 0 || len(samples) != len(cats) {
+	if len(samples) != len(cats) {
 		return
+	} else if len(samples) == 0 {
+		C.facerec_reset_samples(rec.ptr)
+	} else {
+		cSamples := (*C.float)(unsafe.Pointer(&samples[0]))
+		cCats := (*C.int32_t)(unsafe.Pointer(&cats[0]))
+		cLen := C.int(len(samples))
+		C.facerec_set_samples(rec.ptr, cSamples, cCats, cLen)
 	}
-	cSamples := (*C.float)(unsafe.Pointer(&samples[0]))
-	cCats := (*C.int32_t)(unsafe.Pointer(&cats[0]))
-	cLen := C.int(len(samples))
-	C.facerec_set_samples(rec.ptr, cSamples, cCats, cLen)
 }
 
 // Classify returns class ID for the given descriptor. Negative index is
