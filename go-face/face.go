@@ -221,7 +221,7 @@ func (rec *Recognizer) RecognizeSingleCNN(imgData []byte) (face *Face, err error
 	return
 }
 
-// Same as Recognize but accepts image path instead.
+// RecognizeFile Same as Recognize but accepts image path instead.
 func (rec *Recognizer) RecognizeFile(imgPath string) (faces []Face, err error) {
 	return rec.recognizeFile(0, imgPath, 0)
 }
@@ -230,7 +230,7 @@ func (rec *Recognizer) RecognizeFileCNN(imgPath string) (faces []Face, err error
 	return rec.recognizeFile(1, imgPath, 0)
 }
 
-// Same as RecognizeSingle but accepts image path instead.
+// RecognizeSingleFile Same as RecognizeSingle but accepts image path instead.
 func (rec *Recognizer) RecognizeSingleFile(imgPath string) (face *Face, err error) {
 	faces, err := rec.recognizeFile(0, imgPath, 1)
 	if err != nil || len(faces) != 1 {
